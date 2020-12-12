@@ -106,17 +106,16 @@ public class Day12 {
             }
             int tmpY = (position.y + turn) % 4;
             int tmpX = (position.x + turn) % 4;
-            if(turn % 2 != 0){
+            if (turn % 2 != 0) {
                 position.x = tmpY;
                 position.y = tmpX;
                 Long tmp = position.unitX;
                 position.unitX = position.unitY;
                 position.unitY = tmp;
-            }else{
+            } else {
                 position.y = tmpY;
                 position.x = tmpX;
             }
-
         }
     }
 
