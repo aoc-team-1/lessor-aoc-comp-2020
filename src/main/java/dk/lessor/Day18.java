@@ -18,7 +18,7 @@ public class Day18 {
     }
 
     private void puzzleOne(List<String> expressions) {
-        int sum = 0;
+        long sum = 0;
         for (String s : expressions) {
             sum += calculator(s);
         }
@@ -29,7 +29,7 @@ public class Day18 {
 
     }
 
-    private int calculator(String exp) {
+    private long calculator(String exp) {
         if (exp.contains("(")) {
             int indexBegin = exp.indexOf("(");
             int indexEnd = findEnd(exp);
@@ -58,12 +58,12 @@ public class Day18 {
         return characters.length - 1;
     }
 
-    private int simpleExpHandler(String exp) {
+    private long simpleExpHandler(String exp) {
         String[] array = exp.split(" ");
-        int res = 0;
+        long res = 0;
         String operant = null;
         for (String s : array) {
-            int tmp = 0;
+            long tmp = 0;
             if (s.matches("[+*]")) {
                 operant = s;
             } else {
