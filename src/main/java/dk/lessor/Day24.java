@@ -2,21 +2,22 @@ package dk.lessor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class Day24 {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws CloneNotSupportedException {
         new Day24().runner();
     }
 
     public void runner() {
-        puzzleOne();
-//        puzzleTwo();
-    }
-
-    private void puzzleOne() {
         List<String> ins = FileUtilsKt.readFile("day_24.txt");
         List<Tile> visited = new ArrayList<>();
+        puzzleOne(visited, ins);
+        puzzleTwo(visited);
+    }
+
+    private void puzzleOne(List<Tile> visited, List<String> ins) {
         for (String s : ins) {
             Tile tile = new Tile();
             tile.navigate(s);
@@ -27,52 +28,85 @@ public class Day24 {
                 visited.add(tile);
             }
         }
-        for (Tile t : visited) {
-            System.out.println(t.toString());
+        System.out.println(visited.stream().filter(Tile::isBlack).count());
+    }
+
+    private void puzzleTwo(List<Tile> visited) {
+        for (int i = 0; i < 100; i++) {
+            List<Tile> flippedQueue = new ArrayList<>();
+
+            List<Tile> tmp = new ArrayList<>(visited);
+            tmp.forEach(tile -> tile.getNeighbors(visited).stream().filter(neighbor -> !visited.contains(neighbor) && flip(visited, flippedQueue, neighbor)).forEach(visited::add));
+
+            for (int j = 0; j < visited.size(); j++) {
+                Tile tile = visited.get(j);
+                if (!flippedQueue.contains(tile)) {
+                    flip(visited, flippedQueue, tile);
+                }
+            }
+            flippedQueue.forEach(Tile::toggleColour);
         }
         System.out.println(visited.stream().filter(Tile::isBlack).count());
     }
 
-    private class Tile {
+    private boolean flip(List<Tile> visited, List<Tile> flippedQueue, Tile tile) {
+        List<Tile> neighbors = tile.getNeighbors(visited);
+        long count = neighbors.stream().filter(Tile::isBlack).count();
+        if (tile.isBlack() && (count == 0 || count > 2)) {
+            flippedQueue.add(tile);
+            return true;
+        } else if (tile.isWhite() && count == 2) {
+            flippedQueue.add(tile);
+            return true;
+        }
+        return false;
+    }
+
+    private static class Tile implements Cloneable {
         private int x = 0;
         private int y = 0;
         private Boolean colour = false;
 
-        public Tile() { }
+        public Tile() {
+        }
 
-        public void goE() {
+        public Tile goE() {
             x += 2;
+            return this;
         }
 
-        public void goW() {
+        public Tile goW() {
             x -= 2;
+            return this;
         }
 
-        public void goNE() {
+        public Tile goNE() {
             y++;
             x++;
+            return this;
         }
 
-        public void goNW() {
+        public Tile goNW() {
             y++;
             x--;
+            return this;
         }
 
-        public void goSE() {
+        public Tile goSE() {
             y--;
             x++;
+            return this;
         }
 
-        public void goSW() {
+        public Tile goSW() {
             y--;
             x--;
+            return this;
         }
 
         public void toggleColour() {
             colour ^= true;
         }
-
-        public boolean getColour() { return colour; }
 
         public boolean isBlack() {
             return colour;
@@ -82,7 +116,7 @@ public class Day24 {
             return !colour;
         }
 
-        public Tile navigate(String ins) {
+        public void navigate(String ins) {
             String direction = "";
             while (ins.length() > 0) {
                 if (ins.startsWith("e")) {
@@ -111,23 +145,32 @@ public class Day24 {
                 }
                 ins = ins.replaceFirst(direction, "");
             }
-            return this;
         }
 
-        public List<Tile> getNeighbors() throws CloneNotSupportedException {
-            Tile e = ((Tile) this.clone());
-            Tile w = ((Tile) this.clone());
-            Tile ne = ((Tile) this.clone());
-            Tile nw = ((Tile) this.clone());
-            Tile se = ((Tile) this.clone());
-            Tile sw = ((Tile) this.clone());
-            e.goE();
-            w.goW();
-            ne.goNE();
-            nw.goNW();
-            se.goSE();
-            sw.goSW();
-            return List.of(e, w, ne, nw, se, sw);
+        public List<Tile> getNeighbors(List<Tile> visited) {
+            List<Tile> neighbors = new ArrayList<>();
+            try {
+                neighborTile(visited, Tile::goE, neighbors);
+                neighborTile(visited, Tile::goW, neighbors);
+                neighborTile(visited, Tile::goNE, neighbors);
+                neighborTile(visited, Tile::goNW, neighbors);
+                neighborTile(visited, Tile::goSE, neighbors);
+                neighborTile(visited, Tile::goSW, neighbors);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return neighbors;
+        }
+
+        private void neighborTile(List<Tile> visited, Function<Tile, Tile> function, List<Tile> neighbors) throws CloneNotSupportedException {
+            Tile tile = function.apply(((Tile) this.clone()));
+            int index = visited.indexOf(tile);
+            if (index != -1) {
+                neighbors.add(visited.get(index));
+            } else {
+                tile.colour = false;
+                neighbors.add(tile);
+            }
         }
 
         @Override
@@ -140,5 +183,4 @@ public class Day24 {
             return t instanceof Tile && this.x == ((Tile) t).x && this.y == ((Tile) t).y;
         }
     }
-
 }
